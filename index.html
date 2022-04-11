@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang='zh-CN'>
+    <head>
+        <meta charset='UTF-8'>
+        <meta http-equiv='X-UA-Compatible' content='ie=edge'>
+        <meta name='viewport' content='width=device-width, initial-scale=1.0, user-scalable=no'>
+        <title>test</title>
+        <link rel='stylesheet' href=''>
+        <style>
+            html,body{
+                margin:0;
+                padding:0;
+            }
+            .content_wrap{
+                padding:10px 20px;
+            }
+           .tools_wrap{
+               /* margin-top:30px; */
+           }
+            #record_video_button{
+                position: relative;
+                width:100%;
+                height:40px;
+                margin:20px auto;
+                background-color:rgb(84, 107, 238);
+                border-radius: 10px;;
+                color:#fff;
+                text-align:center;
+                line-height: 40px;
+                cursor:pointer;
+            }
+            #record_video_button>input{
+                position: absolute;
+                display: inline-block;
+                width:100%;
+                height:100%;
+                top:0;left:0;right:0;bottom:0;
+                opacity: 0;
+            }
+
+            #face_verify_button{
+                width:100%;
+                height:40px;
+                margin:20px auto;
+                background-color:rgb(243, 168, 71);
+                border-radius: 10px;;
+                color:#fff;
+                text-align:center;
+                line-height: 40px;
+                cursor:pointer;
+            }
+
+            .notice_wrap{
+                text-align: center;
+                height:80px;
+                line-height: 80px;
+                border:1px dotted #ee9d33;
+                background-color: #f7f0e6;
+                border-radius: 5px;
+                margin-top:30px;
+            }
+
+            .notice_wrap>h3{
+                /* text-align: center; */
+                color:#ee9d33;
+                margin:0;
+                padding:0;
+            }
+
+            .video_priview_wrap{
+                text-align:center;
+                background-color: #333333;
+            }
+
+            #videoBox{
+                width:100%;
+
+            }
+
+            #img_priview_wrap{
+                display: flex;
+                flex-direction: row;
+                justify-content: space-between;
+            }
+
+            #img_priview_wrap>img{
+                width:30%;
+
+            }
+            #video_hidden_wrap{
+                /* width:0; */
+                /* height:0; */
+                /* visibility: hidden; */
+            }
+            #videoHidden{
+                width:100%;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="content_wrap">
+            <div>
+                <p>1.正面平视手机，保证光线充足，请勿遮挡面部</p>
+                <p>2.点击录制视频按钮并录制下方提示您需要录制的动作（5秒内）</p>
+                <p>3.录制完成后在保证网络通畅的情况下点击人脸核验按钮</p>
+            </div>
+            <div class="notice_wrap">
+                <h3>上下点头</h3>
+            </div>
+           
+            <div class="tools_wrap">
+                <div id="record_video_button">
+                    <span>录制视频</span>
+                    <input type="file" accept="video/*" capture="camcorder" onchange="videoPreview(this)">
+                </div>
+                <div class="video_priview_wrap">
+                    <!-- <p>视频预览:</p> -->
+                    <!-- <div id="videoBox"> -->
+                        <video id="videoBox" controls="controls" playsinline="true" webkit-playsinline="true" >
+
+                        </video>
+                    <!-- </div> -->
+                </div>
+                <div id="face_verify_button" onclick="getCutImgFn()">
+                    <span>人脸核验</span>
+                </div>
+            </div>
+            <div id="img_priview_wrap">
+
+            </div>
+            <div id="video_hidden_wrap">
+                <video id="videoHidden" autoplay="" muted="" controls="controls" playsinline="true" webkit-playsinline="true" >
+
+                </video>
+            </div>
+            
+        </div>
+
+        <script type='text/javascript'>
+            let videoObj=null;
+            function videoPreview(source) {
+                let file = source.files[0];
+
+                if (window.FileReader) {
+                    let fr = new FileReader();
+                    fr.onloadend = function (e) {
+                       
+                        videoObj=e.target.result;
+                        let videoBox= document.getElementById("videoBox");
+                        let videoHidden= document.getElementById("videoHidden");
+                        videoBox.src=e.target.result
+                        videoHidden.src=e.target.result
+                        // setTimeout(()=>{
+                        //     videoHidden.play();
+                        // },100)
+
+                        var userAgent = navigator.userAgent;
+                        //android终端
+                        var isAndroid = userAgent.indexOf('Android') > -1 || userAgent.indexOf('Adr') > -1;
+                        //ios终端
+                        var isiOS = !!userAgent.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/);
+                        if (isiOS) {
+                            document.addEventListener("WeixinJSBridgeReady", function () {
+                                setTimeout(()=>{
+                                    alert('kkk')
+                                    videoHidden.play();
+                                })
+                            }, false);
+                        } else {
+                            setTimeout(()=>{
+                                alert('ccc')
+                                videoHidden.play();
+                            })
+                        }
+
+                       
+                        
+                        
+                    };
+                    fr.readAsDataURL(file);
+                }
+
+            }
+            var currentIndex=0;
+            var timeArr=[];
+            var imgArr=[];
+
+            function getCutImgFn(){
+                document.getElementById("img_priview_wrap").innerHTML='';
+                currentIndex=0;
+                imgArr=[];
+                let videoPriview=document.getElementById('videoBox')
+                // timeArr=[0,14,26]
+                timeArr=[0,Math.floor(videoPriview.duration/2),videoPriview.duration]
+                // console.log(timeArr)
+                // for(let i=0;i<timeArr.length;i++){
+                    getVideoImage()
+                // }
+
+                // console.log(arr)
+                // let img = document.createElement("img");
+                // img.src = canvas.toDataURL("image/png");
+                // document.getElementById("img_priview_wrap").appendChild(img);
+            }
+
+            function getVideoImage() {
+                let videoElement=document.getElementById('videoHidden')
+                if(currentIndex<timeArr.length){
+                    videoElement.currentTime=timeArr[currentIndex];
+                    videoElement.addEventListener('timeupdate',pushVideoImage)
+                }else{
+                    return
+                }
+                
+           
+            };
+
+            function pushVideoImage(){
+                let videoElement = document.getElementById('videoHidden')
+                console.log(new Date().getMilliseconds())
+                let canvas = document.createElement("canvas");
+                canvas.width = videoElement.videoWidth;
+                canvas.height = videoElement.videoHeight;
+                canvas.getContext('2d').drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+                if (imgArr.length < timeArr.length) {
+                    imgArr.push(canvas.toDataURL("image/png"))
+                    // let img = document.createElement("img");
+                    // img.src = canvas.toDataURL("image/png");
+                    // document.getElementById("img_priview_wrap").appendChild(img);
+                    uploadImgFn();
+                    videoElement.removeEventListener('timeupdate', pushVideoImage)
+                }
+                if (currentIndex < timeArr.length - 1) {
+                    currentIndex++;
+                    getVideoImage();
+                } else {
+                    return
+                }
+            }
+
+            function createImgFn(arr){
+                for(let i=0;i<arr.length;i++){
+                    let img = document.createElement("img");
+                    img.src = arr[i]
+                    document.getElementById("img_priview_wrap").appendChild(img);
+                }
+            }
+
+            function uploadImgFn(){
+                
+                if(imgArr.length===timeArr.length){
+                    createImgFn(imgArr)
+                    // alert(imgArr.length)
+                    
+                    // let img = document.createElement("img");
+                    // img.src = canvas.toDataURL("image/png");
+                    // document.getElementById("img_priview_wrap").appendChild(img);
+                }
+            }
+        </script>
+    </body>
+</html>
